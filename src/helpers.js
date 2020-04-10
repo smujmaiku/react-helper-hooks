@@ -7,6 +7,8 @@
 import { useReducer, useEffect, useState } from 'react';
 import fetch from 'node-fetch';
 
+export const never = new Promise(() => {});
+
 export function patchReducer(state, patch) {
 	if (Object.keys(patch) < 1) return state;
 	return {
@@ -46,7 +48,7 @@ export function pendingReducer(state, [type, payload]) {
 	default:
 	}
 	return state;
-};
+}
 
 /**
  * Use pending hook
@@ -54,12 +56,12 @@ export function pendingReducer(state, [type, payload]) {
  */
 export function usePending() {
 	const [state, dispatch] = useReducer(pendingReducer, {});
-	const actions = {
+	const [actions] = useState({
 		init: () => { dispatch(['init']); },
 		pending: () => { dispatch(['pending']); },
 		reject: (error) => { dispatch(['reject', error]); },
 		resolve: (data) => { dispatch(['resolve', data]); },
-	};
+	});
 	return [state, actions];
 }
 
@@ -69,23 +71,34 @@ export function usePending() {
  * @returns {Object}
  */
 export function usePendingPromise(promise) {
-	const [state, actions] = usePending();
+	const [state, { init, resolve, reject }] = usePending();
+	const [refresh, setRefresh] = useState(0);
+
 	useEffect(() => {
-		actions.init();
+		init();
 		let timeout = false;
 
-		promise.then((data) => {
+		(async () => {
 			if (timeout) return;
-			actions.resolve(data);
-		}).catch(() => {
+			const data = await promise();
+
 			if (timeout) return;
-			actions.fail();
+			resolve(data);
+		})().catch((error) => {
+			if (timeout) return;
+			reject(error);
 		});
 
 		return () => { timeout = true; };
-	}, [promise]);
+	}, [promise, init, resolve, reject, refresh]);
 
-	return state;
+	const actions = {
+		refresh: () => {
+			setRefresh(Date.now());
+		},
+	};
+
+	return [state, actions];
 }
 
 /**
@@ -95,7 +108,7 @@ export function usePendingPromise(promise) {
  * @param {string?} opts.bodyType none|buffer|text|json
  */
 export function usePendingFetch(url, opts = {}) {
-	const [promise, setPromise] = useState({});
+	const [[promise], setPromise] = useState([never]);
 
 	const {
 		bodyType = 'none',
@@ -104,14 +117,15 @@ export function usePendingFetch(url, opts = {}) {
 	const fetchOptsStr = JSON.stringify(fetchOpts);
 
 	useEffect(() => {
-		setPromise(async () => {
-			if (!url) throw new Error('useFetch url undefined');
+		setPromise([async () => {
+			if (!url) throw new Error('usePendingFetch url undefined');
 
 			const res = await fetch(url, JSON.parse(fetchOptsStr));
 			const data = {
 				status: res.status,
 				headers: res.headers,
 			};
+
 			switch (bodyType) {
 			case 'buffer':
 				data.body = await res.buffer();
@@ -124,8 +138,9 @@ export function usePendingFetch(url, opts = {}) {
 				break;
 			default:
 			}
+
 			return data;
-		});
+		}]);
 	}, [url, fetchOptsStr, bodyType]);
 
 	return usePendingPromise(promise);
