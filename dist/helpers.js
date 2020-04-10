@@ -143,8 +143,8 @@ function usePendingPromise(promise) {
 
   var _useState3 = (0, _react.useState)(0),
       _useState4 = _slicedToArray(_useState3, 2),
-      refresh = _useState4[0],
-      setRefresh = _useState4[1];
+      reload = _useState4[0],
+      setReload = _useState4[1];
 
   (0, _react.useEffect)(function () {
     init();
@@ -194,10 +194,10 @@ function usePendingPromise(promise) {
     return function () {
       timeout = true;
     };
-  }, [promise, init, resolve, reject, refresh]);
+  }, [promise, init, resolve, reject, reload]);
   var actions = {
-    refresh: function refresh() {
-      setRefresh(Date.now());
+    reload: function reload() {
+      setReload(Date.now());
     }
   };
   return [state, actions];

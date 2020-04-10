@@ -72,7 +72,7 @@ export function usePending() {
  */
 export function usePendingPromise(promise) {
 	const [state, { init, resolve, reject }] = usePending();
-	const [refresh, setRefresh] = useState(0);
+	const [reload, setReload] = useState(0);
 
 	useEffect(() => {
 		init();
@@ -90,11 +90,11 @@ export function usePendingPromise(promise) {
 		});
 
 		return () => { timeout = true; };
-	}, [promise, init, resolve, reject, refresh]);
+	}, [promise, init, resolve, reject, reload]);
 
 	const actions = {
-		refresh: () => {
-			setRefresh(Date.now());
+		reload: () => {
+			setReload(Date.now());
 		},
 	};
 
