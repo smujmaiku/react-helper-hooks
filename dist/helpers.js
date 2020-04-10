@@ -10,6 +10,7 @@ exports.usePending = usePending;
 exports.usePendingPromise = usePendingPromise;
 exports.usePendingFetch = usePendingFetch;
 exports.useJustOne = useJustOne;
+exports.never = void 0;
 
 var _react = require("react");
 
@@ -17,13 +18,13 @@ var _nodeFetch = _interopRequireDefault(require("node-fetch"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
-
-function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
-
 function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
 
 function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
+
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
@@ -42,6 +43,9 @@ function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (O
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+var never = new Promise(function () {});
+exports.never = never;
 
 function patchReducer(state, patch) {
   if (Object.keys(patch) < 1) return state;
@@ -90,12 +94,11 @@ function pendingReducer(state, _ref) {
 
   return state;
 }
-
-;
 /**
  * Use pending hook
  * @returns {Array} [state,actions]
  */
+
 
 function usePending() {
   var _useReducer = (0, _react.useReducer)(pendingReducer, {}),
@@ -103,7 +106,7 @@ function usePending() {
       state = _useReducer2[0],
       dispatch = _useReducer2[1];
 
-  var actions = {
+  var _useState = (0, _react.useState)({
     init: function init() {
       dispatch(['init']);
     },
@@ -116,7 +119,10 @@ function usePending() {
     resolve: function resolve(data) {
       dispatch(['resolve', data]);
     }
-  };
+  }),
+      _useState2 = _slicedToArray(_useState, 1),
+      actions = _useState2[0];
+
   return [state, actions];
 }
 /**
@@ -130,23 +136,71 @@ function usePendingPromise(promise) {
   var _usePending = usePending(),
       _usePending2 = _slicedToArray(_usePending, 2),
       state = _usePending2[0],
-      actions = _usePending2[1];
+      _usePending2$ = _usePending2[1],
+      init = _usePending2$.init,
+      resolve = _usePending2$.resolve,
+      reject = _usePending2$.reject;
+
+  var _useState3 = (0, _react.useState)(0),
+      _useState4 = _slicedToArray(_useState3, 2),
+      refresh = _useState4[0],
+      setRefresh = _useState4[1];
 
   (0, _react.useEffect)(function () {
-    actions.init();
+    init();
     var timeout = false;
-    promise.then(function (data) {
+
+    _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      var data;
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              if (!timeout) {
+                _context.next = 2;
+                break;
+              }
+
+              return _context.abrupt("return");
+
+            case 2:
+              _context.next = 4;
+              return promise();
+
+            case 4:
+              data = _context.sent;
+
+              if (!timeout) {
+                _context.next = 7;
+                break;
+              }
+
+              return _context.abrupt("return");
+
+            case 7:
+              resolve(data);
+
+            case 8:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee);
+    }))()["catch"](function (error) {
       if (timeout) return;
-      actions.resolve(data);
-    })["catch"](function () {
-      if (timeout) return;
-      actions.fail();
+      reject(error);
     });
+
     return function () {
       timeout = true;
     };
-  }, [promise]);
-  return state;
+  }, [promise, init, resolve, reject, refresh]);
+  var actions = {
+    refresh: function refresh() {
+      setRefresh(Date.now());
+    }
+  };
+  return [state, actions];
 }
 /**
  * Fetch hook
@@ -159,10 +213,11 @@ function usePendingPromise(promise) {
 function usePendingFetch(url) {
   var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-  var _useState = (0, _react.useState)({}),
-      _useState2 = _slicedToArray(_useState, 2),
-      promise = _useState2[0],
-      setPromise = _useState2[1];
+  var _useState5 = (0, _react.useState)([never]),
+      _useState6 = _slicedToArray(_useState5, 2),
+      _useState6$ = _slicedToArray(_useState6[0], 1),
+      promise = _useState6$[0],
+      setPromise = _useState6[1];
 
   var _opts$bodyType = opts.bodyType,
       bodyType = _opts$bodyType === void 0 ? 'none' : _opts$bodyType,
@@ -170,67 +225,67 @@ function usePendingFetch(url) {
 
   var fetchOptsStr = JSON.stringify(fetchOpts);
   (0, _react.useEffect)(function () {
-    setPromise( /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+    setPromise([/*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
       var res, data;
-      return regeneratorRuntime.wrap(function _callee$(_context) {
+      return regeneratorRuntime.wrap(function _callee2$(_context2) {
         while (1) {
-          switch (_context.prev = _context.next) {
+          switch (_context2.prev = _context2.next) {
             case 0:
               if (url) {
-                _context.next = 2;
+                _context2.next = 2;
                 break;
               }
 
-              throw new Error('useFetch url undefined');
+              throw new Error('usePendingFetch url undefined');
 
             case 2:
-              _context.next = 4;
+              _context2.next = 4;
               return (0, _nodeFetch["default"])(url, JSON.parse(fetchOptsStr));
 
             case 4:
-              res = _context.sent;
+              res = _context2.sent;
               data = {
                 status: res.status,
                 headers: res.headers
               };
-              _context.t0 = bodyType;
-              _context.next = _context.t0 === 'buffer' ? 9 : _context.t0 === 'text' ? 13 : _context.t0 === 'json' ? 17 : 21;
+              _context2.t0 = bodyType;
+              _context2.next = _context2.t0 === 'buffer' ? 9 : _context2.t0 === 'text' ? 13 : _context2.t0 === 'json' ? 17 : 21;
               break;
 
             case 9:
-              _context.next = 11;
+              _context2.next = 11;
               return res.buffer();
 
             case 11:
-              data.body = _context.sent;
-              return _context.abrupt("break", 21);
+              data.body = _context2.sent;
+              return _context2.abrupt("break", 21);
 
             case 13:
-              _context.next = 15;
+              _context2.next = 15;
               return res.text();
 
             case 15:
-              data.body = _context.sent;
-              return _context.abrupt("break", 21);
+              data.body = _context2.sent;
+              return _context2.abrupt("break", 21);
 
             case 17:
-              _context.next = 19;
+              _context2.next = 19;
               return res.json();
 
             case 19:
-              data.body = _context.sent;
-              return _context.abrupt("break", 21);
+              data.body = _context2.sent;
+              return _context2.abrupt("break", 21);
 
             case 21:
-              return _context.abrupt("return", data);
+              return _context2.abrupt("return", data);
 
             case 22:
             case "end":
-              return _context.stop();
+              return _context2.stop();
           }
         }
-      }, _callee);
-    })));
+      }, _callee2);
+    }))]);
   }, [url, fetchOptsStr, bodyType]);
   return usePendingPromise(promise);
 }
@@ -242,10 +297,10 @@ function usePendingFetch(url) {
 
 
 function useJustOne(value) {
-  var _useState3 = (0, _react.useState)([value]),
-      _useState4 = _slicedToArray(_useState3, 2),
-      state = _useState4[0],
-      setState = _useState4[1];
+  var _useState7 = (0, _react.useState)([value]),
+      _useState8 = _slicedToArray(_useState7, 2),
+      state = _useState8[0],
+      setState = _useState8[1];
 
   (0, _react.useEffect)(function () {
     setState([value]);
