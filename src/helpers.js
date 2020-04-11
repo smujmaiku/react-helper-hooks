@@ -88,7 +88,7 @@ export function helperReducer(state, [type, payload]) {
  * @returns {Array} [state, actions]
  */
 export function useHelper(initialState) {
-	const [state, dispatch] = useReducer(helperReducer, () => {
+	const [state, dispatch] = useReducer(helperReducer, {}, () => {
 		if (arguments.length < 1) {
 			return helperReducer({}, ['init']);
 		} else if (initialState instanceof Error) {

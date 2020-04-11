@@ -166,7 +166,7 @@ function helperReducer(state, _ref) {
 function useHelper(initialState) {
   var _arguments = arguments;
 
-  var _useReducer = (0, _react.useReducer)(helperReducer, function () {
+  var _useReducer = (0, _react.useReducer)(helperReducer, {}, function () {
     if (_arguments.length < 1) {
       return helperReducer({}, ['init']);
     } else if (initialState instanceof Error) {
