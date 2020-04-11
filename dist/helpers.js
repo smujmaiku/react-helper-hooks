@@ -8,6 +8,7 @@ exports.patchReducer = patchReducer;
 exports.usePatch = usePatch;
 exports.helperReducer = helperReducer;
 exports.useHelper = useHelper;
+exports.useAllHelpers = useAllHelpers;
 exports.usePromise = usePromise;
 exports.useFetch = useFetch;
 exports.useJustOne = useJustOne;
@@ -209,20 +210,76 @@ function useHelper(initialState) {
   return [state, actions];
 }
 /**
- * Promise hook
+ * Combine helpers
+ * @param {Object} helpers
+ * @param {Function?} postProcessor
+ * @returns {Array} [state]
+ */
+
+
+function useAllHelpers(helpers) {
+  var postProcessor = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : undefined;
+
+  var _useHelper = useHelper(),
+      _useHelper2 = _slicedToArray(_useHelper, 2),
+      state = _useHelper2[0],
+      actions = _useHelper2[1];
+
+  (0, _react.useEffect)(function () {
+    var resources = Object.entries(helpers);
+
+    for (var _i2 = 0, _resources = resources; _i2 < _resources.length; _i2++) {
+      var _resources$_i = _slicedToArray(_resources[_i2], 2),
+          ready = _resources$_i[1].ready;
+
+      if (ready) continue;
+      actions.init();
+      return;
+    }
+
+    for (var _i3 = 0, _resources2 = resources; _i3 < _resources2.length; _i3++) {
+      var _resources2$_i = _slicedToArray(_resources2[_i3], 2),
+          key = _resources2$_i[0],
+          failed = _resources2$_i[1].failed;
+
+      if (!failed) continue;
+      actions.reject(key);
+      return;
+    }
+
+    var newState = {};
+
+    for (var _i4 = 0, _Object$entries = Object.entries(helpers); _i4 < _Object$entries.length; _i4++) {
+      var _Object$entries$_i = _slicedToArray(_Object$entries[_i4], 2),
+          _key = _Object$entries$_i[0],
+          data = _Object$entries$_i[1].data;
+
+      newState[_key] = data;
+    }
+
+    if (postProcessor) {
+      newState = postProcessor(newState);
+    }
+
+    actions.resolve(newState);
+  }, [helpers, postProcessor]);
+  return [state];
+}
+/**
+ * Promise hook(This isn't great)
  * @param {Promise} promise
  * @returns {Array} [state, actions]
  */
 
 
 function usePromise(promise) {
-  var _useHelper = useHelper(),
-      _useHelper2 = _slicedToArray(_useHelper, 2),
-      state = _useHelper2[0],
-      _useHelper2$ = _useHelper2[1],
-      init = _useHelper2$.init,
-      resolve = _useHelper2$.resolve,
-      reject = _useHelper2$.reject;
+  var _useHelper3 = useHelper(),
+      _useHelper4 = _slicedToArray(_useHelper3, 2),
+      state = _useHelper4[0],
+      _useHelper4$ = _useHelper4[1],
+      init = _useHelper4$.init,
+      resolve = _useHelper4$.resolve,
+      reject = _useHelper4$.reject;
 
   var _useState3 = (0, _react.useState)(0),
       _useState4 = _slicedToArray(_useState3, 2),

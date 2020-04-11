@@ -111,7 +111,46 @@ export function useHelper(initialState) {
 }
 
 /**
- * Promise hook
+ * Combine helpers
+ * @param {Object} helpers
+ * @param {Function?} postProcessor
+ * @returns {Array} [state]
+ */
+export function useAllHelpers(helpers, postProcessor = undefined) {
+	const [state, actions] = useHelper();
+
+	useEffect(() => {
+		const resources = Object.entries(helpers);
+
+		for (const [, { ready }] of resources) {
+			if (ready) continue;
+			actions.init();
+			return;
+		}
+
+		for (const [key, { failed }] of resources) {
+			if (!failed) continue;
+			actions.reject(key);
+			return;
+		}
+
+		let newState = {};
+		for (const [key, { data }] of Object.entries(helpers)) {
+			newState[key] = data;
+		}
+
+		if (postProcessor) {
+			newState = postProcessor(newState);
+		}
+
+		actions.resolve(newState);
+	}, [helpers, postProcessor]);
+
+	return [state];
+}
+
+/**
+ * Promise hook(This isn't great)
  * @param {Promise} promise
  * @returns {Array} [state, actions]
  */
