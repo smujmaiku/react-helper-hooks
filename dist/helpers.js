@@ -3,12 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.rebuildObjectTree = rebuildObjectTree;
 exports.patchReducer = patchReducer;
 exports.usePatch = usePatch;
-exports.pendingReducer = pendingReducer;
-exports.usePending = usePending;
-exports.usePendingPromise = usePendingPromise;
-exports.usePendingFetch = usePendingFetch;
+exports.helperReducer = helperReducer;
+exports.useHelper = useHelper;
+exports.usePromise = usePromise;
+exports.useFetch = useFetch;
 exports.useJustOne = useJustOne;
 exports.never = void 0;
 
@@ -26,17 +27,27 @@ function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+
+function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
+
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
 function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return; var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+function _createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e2) { throw _e2; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e3) { didErr = true; err = _e3; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
@@ -46,6 +57,36 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 var never = new Promise(function () {});
 exports.never = never;
+
+function rebuildObjectTree(state, list) {
+  var newState = _objectSpread({}, state);
+
+  var node = newState;
+
+  var _iterator = _createForOfIteratorHelper(list),
+      _step;
+
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var key = _step.value;
+      var child = node[key];
+
+      if (child && child instanceof Object && !(child instanceof Array)) {
+        node[key] = _objectSpread({}, child);
+      } else {
+        node[key] = {};
+      }
+
+      node = node[key];
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+
+  return [newState, node];
+}
 
 function patchReducer(state, patch) {
   if (Object.keys(patch) < 1) return state;
@@ -63,7 +104,7 @@ function usePatch() {
   return (0, _react.useReducer)(patchReducer, init);
 }
 
-function pendingReducer(state, _ref) {
+function helperReducer(state, _ref) {
   var _ref2 = _slicedToArray(_ref, 2),
       type = _ref2[0],
       payload = _ref2[1];
@@ -72,7 +113,7 @@ function pendingReducer(state, _ref) {
     case 'init':
       return {};
 
-    case 'pending':
+    case 'reset':
       if (state.failed) return {};
       return state;
 
@@ -89,19 +130,51 @@ function pendingReducer(state, _ref) {
         data: payload
       };
 
+    case 'patch':
+      if (!state.ready || state.failed) return state;
+      return _objectSpread({}, state, {
+        data: _objectSpread({}, state.data, {}, payload)
+      });
+
+    case 'setIn':
+      {
+        if (!state.ready || state.failed) return state;
+        var list = ['data'].concat(_toConsumableArray(payload.key));
+        var lastKey = list.pop();
+
+        var _rebuildObjectTree = rebuildObjectTree(state, list),
+            _rebuildObjectTree2 = _slicedToArray(_rebuildObjectTree, 2),
+            newState = _rebuildObjectTree2[0],
+            node = _rebuildObjectTree2[1];
+
+        node[lastKey] = payload.data;
+        return newState;
+      }
+
     default:
   }
 
   return state;
 }
 /**
- * Use pending hook
- * @returns {Array} [state,actions]
+ * Use helper reducer
+ * @param {*?} initialState
+ * @returns {Array} [state, actions]
  */
 
 
-function usePending() {
-  var _useReducer = (0, _react.useReducer)(pendingReducer, {}),
+function useHelper(initialState) {
+  var _arguments = arguments;
+
+  var _useReducer = (0, _react.useReducer)(helperReducer, function () {
+    if (_arguments.length < 1) {
+      return helperReducer({}, ['init']);
+    } else if (initialState instanceof Error) {
+      return helperReducer({}, ['reject', initialState]);
+    }
+
+    return helperReducer({}, ['resolve', initialState]);
+  }),
       _useReducer2 = _slicedToArray(_useReducer, 2),
       state = _useReducer2[0],
       dispatch = _useReducer2[1];
@@ -110,14 +183,23 @@ function usePending() {
     init: function init() {
       dispatch(['init']);
     },
-    pending: function pending() {
-      dispatch(['pending']);
+    reset: function reset() {
+      dispatch(['reset']);
     },
     reject: function reject(error) {
       dispatch(['reject', error]);
     },
     resolve: function resolve(data) {
       dispatch(['resolve', data]);
+    },
+    patch: function patch(data) {
+      dispatch(['patch', data]);
+    },
+    setIn: function setIn(key, data) {
+      dispatch(['setIn', {
+        key: key,
+        data: data
+      }]);
     }
   }),
       _useState2 = _slicedToArray(_useState, 1),
@@ -126,20 +208,20 @@ function usePending() {
   return [state, actions];
 }
 /**
- * Use pending hook with a promise
+ * Promise hook
  * @param {Promise} promise
- * @returns {Object}
+ * @returns {Array} [state, actions]
  */
 
 
-function usePendingPromise(promise) {
-  var _usePending = usePending(),
-      _usePending2 = _slicedToArray(_usePending, 2),
-      state = _usePending2[0],
-      _usePending2$ = _usePending2[1],
-      init = _usePending2$.init,
-      resolve = _usePending2$.resolve,
-      reject = _usePending2$.reject;
+function usePromise(promise) {
+  var _useHelper = useHelper(),
+      _useHelper2 = _slicedToArray(_useHelper, 2),
+      state = _useHelper2[0],
+      _useHelper2$ = _useHelper2[1],
+      init = _useHelper2$.init,
+      resolve = _useHelper2$.resolve,
+      reject = _useHelper2$.reject;
 
   var _useState3 = (0, _react.useState)(0),
       _useState4 = _slicedToArray(_useState3, 2),
@@ -195,11 +277,15 @@ function usePendingPromise(promise) {
       timeout = true;
     };
   }, [promise, init, resolve, reject, reload]);
-  var actions = {
+
+  var _useState5 = (0, _react.useState)({
     reload: function reload() {
       setReload(Date.now());
     }
-  };
+  }),
+      _useState6 = _slicedToArray(_useState5, 1),
+      actions = _useState6[0];
+
   return [state, actions];
 }
 /**
@@ -207,17 +293,18 @@ function usePendingPromise(promise) {
  * @param {string} url
  * @param {Object} opts
  * @param {string?} opts.bodyType none|buffer|text|json
+ * @returns {Array} [state, actions]
  */
 
 
-function usePendingFetch(url) {
+function useFetch(url) {
   var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-  var _useState5 = (0, _react.useState)([never]),
-      _useState6 = _slicedToArray(_useState5, 2),
-      _useState6$ = _slicedToArray(_useState6[0], 1),
-      promise = _useState6$[0],
-      setPromise = _useState6[1];
+  var _useState7 = (0, _react.useState)([never]),
+      _useState8 = _slicedToArray(_useState7, 2),
+      _useState8$ = _slicedToArray(_useState8[0], 1),
+      promise = _useState8$[0],
+      setPromise = _useState8[1];
 
   var _opts$bodyType = opts.bodyType,
       bodyType = _opts$bodyType === void 0 ? 'none' : _opts$bodyType,
@@ -287,7 +374,7 @@ function usePendingFetch(url) {
       }, _callee2);
     }))]);
   }, [url, fetchOptsStr, bodyType]);
-  return usePendingPromise(promise);
+  return usePromise(promise);
 }
 /**
  * Expand a single value to an Array for a hook
@@ -297,10 +384,10 @@ function usePendingFetch(url) {
 
 
 function useJustOne(value) {
-  var _useState7 = (0, _react.useState)([value]),
-      _useState8 = _slicedToArray(_useState7, 2),
-      state = _useState8[0],
-      setState = _useState8[1];
+  var _useState9 = (0, _react.useState)([value]),
+      _useState10 = _slicedToArray(_useState9, 2),
+      state = _useState10[0],
+      setState = _useState10[1];
 
   (0, _react.useEffect)(function () {
     setState([value]);

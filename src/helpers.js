@@ -9,6 +9,21 @@ import fetch from 'node-fetch';
 
 export const never = new Promise(() => {});
 
+export function rebuildObjectTree(state, list) {
+	const newState = { ...state };
+	let node = newState;
+	for (const key of list) {
+		const child = node[key];
+		if (child && child instanceof Object && !(child instanceof Array)) {
+			node[key] = { ...child };
+		} else {
+			node[key] = {};
+		}
+		node = node[key];
+	}
+	return [newState, node];
+}
+
 export function patchReducer(state, patch) {
 	if (Object.keys(patch) < 1) return state;
 	return {
@@ -26,11 +41,11 @@ export function usePatch(init = {}) {
 	return useReducer(patchReducer, init);
 }
 
-export function pendingReducer(state, [type, payload]) {
+export function helperReducer(state, [type, payload]) {
 	switch (type) {
 	case 'init':
 		return {};
-	case 'pending':
+	case 'reset':
 		if (state.failed) return {};
 		return state;
 	case 'reject':
@@ -45,33 +60,62 @@ export function pendingReducer(state, [type, payload]) {
 			ready: true,
 			data: payload,
 		};
+	case 'patch':
+		if (!state.ready || state.failed) return state;
+		return {
+			...state,
+			data: {
+				...state.data,
+				...payload,
+			},
+		};
+	case 'setIn': {
+		if (!state.ready || state.failed) return state;
+		const list = ['data', ...payload.key];
+		const lastKey = list.pop();
+		const [newState, node] = rebuildObjectTree(state, list);
+		node[lastKey] = payload.data;
+		return newState;
+	}
 	default:
 	}
 	return state;
 }
 
 /**
- * Use pending hook
- * @returns {Array} [state,actions]
+ * Use helper reducer
+ * @param {*?} initialState
+ * @returns {Array} [state, actions]
  */
-export function usePending() {
-	const [state, dispatch] = useReducer(pendingReducer, {});
+export function useHelper(initialState) {
+	const [state, dispatch] = useReducer(helperReducer, () => {
+		if (arguments.length < 1) {
+			return helperReducer({}, ['init']);
+		} else if (initialState instanceof Error) {
+			return helperReducer({}, ['reject', initialState]);
+		}
+		return helperReducer({}, ['resolve', initialState]);
+	});
+
 	const [actions] = useState({
 		init: () => { dispatch(['init']); },
-		pending: () => { dispatch(['pending']); },
+		reset: () => { dispatch(['reset']); },
 		reject: (error) => { dispatch(['reject', error]); },
 		resolve: (data) => { dispatch(['resolve', data]); },
+		patch: (data) => { dispatch(['patch', data]); },
+		setIn: (key, data) => { dispatch(['setIn', { key, data }]); },
 	});
+
 	return [state, actions];
 }
 
 /**
- * Use pending hook with a promise
+ * Promise hook
  * @param {Promise} promise
- * @returns {Object}
+ * @returns {Array} [state, actions]
  */
-export function usePendingPromise(promise) {
-	const [state, { init, resolve, reject }] = usePending();
+export function usePromise(promise) {
+	const [state, { init, resolve, reject }] = useHelper();
 	const [reload, setReload] = useState(0);
 
 	useEffect(() => {
@@ -92,11 +136,11 @@ export function usePendingPromise(promise) {
 		return () => { timeout = true; };
 	}, [promise, init, resolve, reject, reload]);
 
-	const actions = {
+	const [actions] = useState({
 		reload: () => {
 			setReload(Date.now());
 		},
-	};
+	});
 
 	return [state, actions];
 }
@@ -106,8 +150,9 @@ export function usePendingPromise(promise) {
  * @param {string} url
  * @param {Object} opts
  * @param {string?} opts.bodyType none|buffer|text|json
+ * @returns {Array} [state, actions]
  */
-export function usePendingFetch(url, opts = {}) {
+export function useFetch(url, opts = {}) {
 	const [[promise], setPromise] = useState([never]);
 
 	const {
@@ -143,7 +188,7 @@ export function usePendingFetch(url, opts = {}) {
 		}]);
 	}, [url, fetchOptsStr, bodyType]);
 
-	return usePendingPromise(promise);
+	return usePromise(promise);
 }
 
 /**
