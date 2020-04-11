@@ -25,6 +25,7 @@ export function rebuildObjectTree(state, list) {
 }
 
 export function patchReducer(state, patch) {
+	if (!(patch instanceof Object)) return {};
 	if (Object.keys(patch) < 1) return state;
 	return {
 		...state,

@@ -89,6 +89,7 @@ function rebuildObjectTree(state, list) {
 }
 
 function patchReducer(state, patch) {
+  if (!(patch instanceof Object)) return {};
   if (Object.keys(patch) < 1) return state;
   return _objectSpread({}, state, {}, patch);
 }
