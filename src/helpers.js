@@ -111,42 +111,64 @@ export function useHelper(initialState) {
 }
 
 /**
+ * Check helpers are ready
+ * @param {Array} helpers
+ * @returns {Boolean}
+ */
+export const checkHelpersReady = (helpers) => helpers.every(({ ready }) => ready);
+
+/**
+ * Check helpers have failed
+ * @param {Array} helpers
+ * @returns {Boolean}
+ */
+export const checkHelpersFailed = (helpers) => helpers.some(({ failed }) => failed);
+
+/**
  * Combine helpers
- * @param {Object} helpers
- * @param {Function?} postProcessor
- * @returns {Array} [state]
+ * @param {Object} helpers with useMemo
+ * @param {Function?} postProcessor with useCallback
+ * @returns {Array} [state, actions]
+ * @example
+ * const [state] = useAllHelpers(
+ *   useMemo(() => ({
+ *     one, two, three
+ *   }), [one, two, three]),
+ *   useCallback((data) => {
+ *     // Mutate the data
+ *     return newData;
+ *   }, []),
+ * )
  */
 export function useAllHelpers(helpers, postProcessor = undefined) {
 	const [state, actions] = useHelper();
+	const { init, resolve, reject } = actions;
 
 	useEffect(() => {
-		const resources = Object.entries(helpers);
-
-		for (const [, { ready }] of resources) {
-			if (ready) continue;
-			actions.init();
+		const list = Object.values(helpers);
+		if (!checkHelpersReady(list)) {
+			init();
 			return;
 		}
 
-		for (const [key, { failed }] of resources) {
-			if (!failed) continue;
-			actions.reject(key);
+		if (checkHelpersFailed(list)) {
+			reject();
 			return;
 		}
 
 		let newState = {};
-		for (const [key, { data }] of Object.entries(helpers)) {
+		Object.entries(helpers).forEach(([key, { data }]) => {
 			newState[key] = data;
-		}
+		});
 
 		if (postProcessor) {
 			newState = postProcessor(newState);
 		}
 
-		actions.resolve(newState);
-	}, [helpers, postProcessor]);
+		resolve(newState);
+	}, [helpers, postProcessor, init, resolve, reject]);
 
-	return [state];
+	return [state, actions];
 }
 
 /**

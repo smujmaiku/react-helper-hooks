@@ -12,7 +12,7 @@ exports.useAllHelpers = useAllHelpers;
 exports.usePromise = usePromise;
 exports.useFetch = useFetch;
 exports.useJustOne = useJustOne;
-exports.never = void 0;
+exports.checkHelpersFailed = exports.checkHelpersReady = exports.never = void 0;
 
 var _react = require("react");
 
@@ -210,12 +210,52 @@ function useHelper(initialState) {
   return [state, actions];
 }
 /**
- * Combine helpers
- * @param {Object} helpers
- * @param {Function?} postProcessor
- * @returns {Array} [state]
+ * Check helpers are ready
+ * @param {Array} helpers
+ * @returns {Boolean}
  */
 
+
+var checkHelpersReady = function checkHelpersReady(helpers) {
+  return helpers.every(function (_ref3) {
+    var ready = _ref3.ready;
+    return ready;
+  });
+};
+/**
+ * Check helpers have failed
+ * @param {Array} helpers
+ * @returns {Boolean}
+ */
+
+
+exports.checkHelpersReady = checkHelpersReady;
+
+var checkHelpersFailed = function checkHelpersFailed(helpers) {
+  return helpers.some(function (_ref4) {
+    var failed = _ref4.failed;
+    return failed;
+  });
+};
+/**
+ * Combine helpers
+ * @param {Object} helpers with useMemo
+ * @param {Function?} postProcessor with useCallback
+ * @returns {Array} [state, actions]
+ * @example
+ * const [state] = useAllHelpers(
+ *   useMemo(() => ({
+ *     one, two, three
+ *   }), [one, two, three]),
+ *   useCallback((data) => {
+ *     // Mutate the data
+ *     return newData;
+ *   }, []),
+ * )
+ */
+
+
+exports.checkHelpersFailed = checkHelpersFailed;
 
 function useAllHelpers(helpers) {
   var postProcessor = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : undefined;
@@ -225,45 +265,38 @@ function useAllHelpers(helpers) {
       state = _useHelper2[0],
       actions = _useHelper2[1];
 
+  var init = actions.init,
+      resolve = actions.resolve,
+      reject = actions.reject;
   (0, _react.useEffect)(function () {
-    var resources = Object.entries(helpers);
+    var list = Object.values(helpers);
 
-    for (var _i2 = 0, _resources = resources; _i2 < _resources.length; _i2++) {
-      var _resources$_i = _slicedToArray(_resources[_i2], 2),
-          ready = _resources$_i[1].ready;
-
-      if (ready) continue;
-      actions.init();
+    if (!checkHelpersReady(list)) {
+      init();
       return;
     }
 
-    for (var _i3 = 0, _resources2 = resources; _i3 < _resources2.length; _i3++) {
-      var _resources2$_i = _slicedToArray(_resources2[_i3], 2),
-          key = _resources2$_i[0],
-          failed = _resources2$_i[1].failed;
-
-      if (!failed) continue;
-      actions.reject(key);
+    if (checkHelpersFailed(list)) {
+      reject();
       return;
     }
 
     var newState = {};
+    Object.entries(helpers).forEach(function (_ref5) {
+      var _ref6 = _slicedToArray(_ref5, 2),
+          key = _ref6[0],
+          data = _ref6[1].data;
 
-    for (var _i4 = 0, _Object$entries = Object.entries(helpers); _i4 < _Object$entries.length; _i4++) {
-      var _Object$entries$_i = _slicedToArray(_Object$entries[_i4], 2),
-          _key = _Object$entries$_i[0],
-          data = _Object$entries$_i[1].data;
-
-      newState[_key] = data;
-    }
+      newState[key] = data;
+    });
 
     if (postProcessor) {
       newState = postProcessor(newState);
     }
 
-    actions.resolve(newState);
-  }, [helpers, postProcessor]);
-  return [state];
+    resolve(newState);
+  }, [helpers, postProcessor, init, resolve, reject]);
+  return [state, actions];
 }
 /**
  * Promise hook(This isn't great)
