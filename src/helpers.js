@@ -9,6 +9,21 @@ import fetch from 'node-fetch';
 
 export const never = new Promise(() => {});
 
+/**
+ * Use an object in a dependancy
+ * @param {*} object
+ */
+export function useObject(object) {
+	const [state, setState] = useState(object);
+	const str = JSON.stringify(object);
+
+	useEffect(() => {
+		setState(JSON.parse(str));
+	}, [str]);
+
+	return state;
+}
+
 export function rebuildObjectTree(state, list) {
 	const newState = { ...state };
 	let node = newState;
@@ -222,14 +237,14 @@ export function usePromise(promise) {
 export function useFetch(url, opts = {}) {
 	const {
 		bodyType = 'none',
-		...fetchOpts
+		...otherOpts
 	} = opts;
-	const fetchOptsStr = JSON.stringify(fetchOpts);
+	const fetchOpts = useObject(otherOpts);
 
 	const promise = useCallback(async () => {
 		if (!url) throw new Error('usePendingFetch url undefined');
 
-		const res = await fetch(url, JSON.parse(fetchOptsStr));
+		const res = await fetch(url, fetchOpts);
 		const data = {
 			status: res.status,
 			headers: res.headers,
@@ -249,7 +264,7 @@ export function useFetch(url, opts = {}) {
 		}
 
 		return data;
-	}, [url, fetchOptsStr, bodyType]);
+	}, [url, fetchOpts, bodyType]);
 
 	return usePromise(promise);
 }

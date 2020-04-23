@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.useObject = useObject;
 exports.rebuildObjectTree = rebuildObjectTree;
 exports.patchReducer = patchReducer;
 exports.usePatch = usePatch;
@@ -35,19 +36,7 @@ function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && Symbol.it
 
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
 
-function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
-
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-
-function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return; var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
-
-function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
-
 function _createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e2) { throw _e2; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e3) { didErr = true; err = _e3; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
@@ -55,8 +44,38 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return; var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
 var never = new Promise(function () {});
+/**
+ * Use an object in a dependancy
+ * @param {*} object
+ */
+
 exports.never = never;
+
+function useObject(object) {
+  var _useState = (0, _react.useState)(object),
+      _useState2 = _slicedToArray(_useState, 2),
+      state = _useState2[0],
+      setState = _useState2[1];
+
+  var str = JSON.stringify(object);
+  (0, _react.useEffect)(function () {
+    setState(JSON.parse(str));
+  }, [str]);
+  return state;
+}
 
 function rebuildObjectTree(state, list) {
   var newState = _objectSpread({}, state);
@@ -180,7 +199,7 @@ function useHelper(initialState) {
       state = _useReducer2[0],
       dispatch = _useReducer2[1];
 
-  var _useState = (0, _react.useState)({
+  var _useState3 = (0, _react.useState)({
     init: function init() {
       dispatch(['init']);
     },
@@ -203,8 +222,8 @@ function useHelper(initialState) {
       }]);
     }
   }),
-      _useState2 = _slicedToArray(_useState, 1),
-      actions = _useState2[0];
+      _useState4 = _slicedToArray(_useState3, 1),
+      actions = _useState4[0];
 
   return [state, actions];
 }
@@ -318,10 +337,10 @@ function usePromise(promise) {
       resolve = _useHelper4$.resolve,
       reject = _useHelper4$.reject;
 
-  var _useState3 = (0, _react.useState)(0),
-      _useState4 = _slicedToArray(_useState3, 2),
-      reload = _useState4[0],
-      setReload = _useState4[1];
+  var _useState5 = (0, _react.useState)(0),
+      _useState6 = _slicedToArray(_useState5, 2),
+      reload = _useState6[0],
+      setReload = _useState6[1];
 
   (0, _react.useEffect)(function () {
     init();
@@ -373,13 +392,13 @@ function usePromise(promise) {
     };
   }, [promise, init, resolve, reject, reload]);
 
-  var _useState5 = (0, _react.useState)({
+  var _useState7 = (0, _react.useState)({
     reload: function reload() {
       setReload(Date.now());
     }
   }),
-      _useState6 = _slicedToArray(_useState5, 1),
-      actions = _useState6[0];
+      _useState8 = _slicedToArray(_useState7, 1),
+      actions = _useState8[0];
 
   return [state, actions];
 }
@@ -397,9 +416,9 @@ function useFetch(url) {
 
   var _opts$bodyType = opts.bodyType,
       bodyType = _opts$bodyType === void 0 ? 'none' : _opts$bodyType,
-      fetchOpts = _objectWithoutProperties(opts, ["bodyType"]);
+      otherOpts = _objectWithoutProperties(opts, ["bodyType"]);
 
-  var fetchOptsStr = JSON.stringify(fetchOpts);
+  var fetchOpts = useObject(otherOpts);
   var promise = (0, _react.useCallback)( /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
     var res, data;
     return regeneratorRuntime.wrap(function _callee2$(_context2) {
@@ -415,7 +434,7 @@ function useFetch(url) {
 
           case 2:
             _context2.next = 4;
-            return (0, _nodeFetch["default"])(url, JSON.parse(fetchOptsStr));
+            return (0, _nodeFetch["default"])(url, fetchOpts);
 
           case 4:
             res = _context2.sent;
@@ -460,6 +479,6 @@ function useFetch(url) {
         }
       }
     }, _callee2);
-  })), [url, fetchOptsStr, bodyType]);
+  })), [url, fetchOpts, bodyType]);
   return usePromise(promise);
 }
