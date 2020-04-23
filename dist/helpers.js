@@ -299,9 +299,14 @@ function useAllHelpers(helpers) {
   return [state, actions];
 }
 /**
- * Promise hook(This isn't great)
- * @param {Promise} promise
+ * Promise hook
+ * @param {Promise} promise with useCallback
  * @returns {Array} [state, actions]
+ * @example
+ * const promise = useCallback(async () => {
+ *   ...
+ * }, []);
+ * return usePromise(promise);
  */
 
 
@@ -391,80 +396,72 @@ function usePromise(promise) {
 function useFetch(url) {
   var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-  var _useState7 = (0, _react.useState)([never]),
-      _useState8 = _slicedToArray(_useState7, 2),
-      _useState8$ = _slicedToArray(_useState8[0], 1),
-      promise = _useState8$[0],
-      setPromise = _useState8[1];
-
   var _opts$bodyType = opts.bodyType,
       bodyType = _opts$bodyType === void 0 ? 'none' : _opts$bodyType,
       fetchOpts = _objectWithoutProperties(opts, ["bodyType"]);
 
   var fetchOptsStr = JSON.stringify(fetchOpts);
-  (0, _react.useEffect)(function () {
-    setPromise([/*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
-      var res, data;
-      return regeneratorRuntime.wrap(function _callee2$(_context2) {
-        while (1) {
-          switch (_context2.prev = _context2.next) {
-            case 0:
-              if (url) {
-                _context2.next = 2;
-                break;
-              }
-
-              throw new Error('usePendingFetch url undefined');
-
-            case 2:
-              _context2.next = 4;
-              return (0, _nodeFetch["default"])(url, JSON.parse(fetchOptsStr));
-
-            case 4:
-              res = _context2.sent;
-              data = {
-                status: res.status,
-                headers: res.headers
-              };
-              _context2.t0 = bodyType;
-              _context2.next = _context2.t0 === 'buffer' ? 9 : _context2.t0 === 'text' ? 13 : _context2.t0 === 'json' ? 17 : 21;
+  var promise = (0, _react.useCallback)( /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+    var res, data;
+    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            if (url) {
+              _context2.next = 2;
               break;
+            }
 
-            case 9:
-              _context2.next = 11;
-              return res.buffer();
+            throw new Error('usePendingFetch url undefined');
 
-            case 11:
-              data.body = _context2.sent;
-              return _context2.abrupt("break", 21);
+          case 2:
+            _context2.next = 4;
+            return (0, _nodeFetch["default"])(url, JSON.parse(fetchOptsStr));
 
-            case 13:
-              _context2.next = 15;
-              return res.text();
+          case 4:
+            res = _context2.sent;
+            data = {
+              status: res.status,
+              headers: res.headers
+            };
+            _context2.t0 = bodyType;
+            _context2.next = _context2.t0 === 'buffer' ? 9 : _context2.t0 === 'text' ? 13 : _context2.t0 === 'json' ? 17 : 21;
+            break;
 
-            case 15:
-              data.body = _context2.sent;
-              return _context2.abrupt("break", 21);
+          case 9:
+            _context2.next = 11;
+            return res.buffer();
 
-            case 17:
-              _context2.next = 19;
-              return res.json();
+          case 11:
+            data.body = _context2.sent;
+            return _context2.abrupt("break", 21);
 
-            case 19:
-              data.body = _context2.sent;
-              return _context2.abrupt("break", 21);
+          case 13:
+            _context2.next = 15;
+            return res.text();
 
-            case 21:
-              return _context2.abrupt("return", data);
+          case 15:
+            data.body = _context2.sent;
+            return _context2.abrupt("break", 21);
 
-            case 22:
-            case "end":
-              return _context2.stop();
-          }
+          case 17:
+            _context2.next = 19;
+            return res.json();
+
+          case 19:
+            data.body = _context2.sent;
+            return _context2.abrupt("break", 21);
+
+          case 21:
+            return _context2.abrupt("return", data);
+
+          case 22:
+          case "end":
+            return _context2.stop();
         }
-      }, _callee2);
-    }))]);
-  }, [url, fetchOptsStr, bodyType]);
+      }
+    }, _callee2);
+  })), [url, fetchOptsStr, bodyType]);
   return usePromise(promise);
 }
 /**
@@ -475,10 +472,10 @@ function useFetch(url) {
 
 
 function useJustOne(value) {
-  var _useState9 = (0, _react.useState)([value]),
-      _useState10 = _slicedToArray(_useState9, 2),
-      state = _useState10[0],
-      setState = _useState10[1];
+  var _useState7 = (0, _react.useState)([value]),
+      _useState8 = _slicedToArray(_useState7, 2),
+      state = _useState8[0],
+      setState = _useState8[1];
 
   (0, _react.useEffect)(function () {
     setState([value]);

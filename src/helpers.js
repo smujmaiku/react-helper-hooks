@@ -4,7 +4,7 @@
  * MIT Licensed
  */
 
-import { useReducer, useEffect, useState } from 'react';
+import { useReducer, useEffect, useState, useCallback } from 'react';
 import fetch from 'node-fetch';
 
 export const never = new Promise(() => {});
@@ -172,9 +172,14 @@ export function useAllHelpers(helpers, postProcessor = undefined) {
 }
 
 /**
- * Promise hook(This isn't great)
- * @param {Promise} promise
+ * Promise hook
+ * @param {Promise} promise with useCallback
  * @returns {Array} [state, actions]
+ * @example
+ * const promise = useCallback(async () => {
+ *   ...
+ * }, []);
+ * return usePromise(promise);
  */
 export function usePromise(promise) {
 	const [state, { init, resolve, reject }] = useHelper();
@@ -215,39 +220,35 @@ export function usePromise(promise) {
  * @returns {Array} [state, actions]
  */
 export function useFetch(url, opts = {}) {
-	const [[promise], setPromise] = useState([never]);
-
 	const {
 		bodyType = 'none',
 		...fetchOpts
 	} = opts;
 	const fetchOptsStr = JSON.stringify(fetchOpts);
 
-	useEffect(() => {
-		setPromise([async () => {
-			if (!url) throw new Error('usePendingFetch url undefined');
+	const promise = useCallback(async () => {
+		if (!url) throw new Error('usePendingFetch url undefined');
 
-			const res = await fetch(url, JSON.parse(fetchOptsStr));
-			const data = {
-				status: res.status,
-				headers: res.headers,
-			};
+		const res = await fetch(url, JSON.parse(fetchOptsStr));
+		const data = {
+			status: res.status,
+			headers: res.headers,
+		};
 
-			switch (bodyType) {
-			case 'buffer':
-				data.body = await res.buffer();
-				break;
-			case 'text':
-				data.body = await res.text();
-				break;
-			case 'json':
-				data.body = await res.json();
-				break;
-			default:
-			}
+		switch (bodyType) {
+		case 'buffer':
+			data.body = await res.buffer();
+			break;
+		case 'text':
+			data.body = await res.text();
+			break;
+		case 'json':
+			data.body = await res.json();
+			break;
+		default:
+		}
 
-			return data;
-		}]);
+		return data;
 	}, [url, fetchOptsStr, bodyType]);
 
 	return usePromise(promise);
