@@ -253,18 +253,3 @@ export function useFetch(url, opts = {}) {
 
 	return usePromise(promise);
 }
-
-/**
- * Expand a single value to an Array for a hook
- * @param {*} value
- * @returns {Array}
- */
-export function useJustOne(value) {
-	const [state, setState] = useState([value]);
-
-	useEffect(() => {
-		setState([value]);
-	}, [value]);
-
-	return state;
-}

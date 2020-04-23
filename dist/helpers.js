@@ -11,7 +11,6 @@ exports.useHelper = useHelper;
 exports.useAllHelpers = useAllHelpers;
 exports.usePromise = usePromise;
 exports.useFetch = useFetch;
-exports.useJustOne = useJustOne;
 exports.checkHelpersFailed = exports.checkHelpersReady = exports.never = void 0;
 
 var _react = require("react");
@@ -463,22 +462,4 @@ function useFetch(url) {
     }, _callee2);
   })), [url, fetchOptsStr, bodyType]);
   return usePromise(promise);
-}
-/**
- * Expand a single value to an Array for a hook
- * @param {*} value
- * @returns {Array}
- */
-
-
-function useJustOne(value) {
-  var _useState7 = (0, _react.useState)([value]),
-      _useState8 = _slicedToArray(_useState7, 2),
-      state = _useState8[0],
-      setState = _useState8[1];
-
-  (0, _react.useEffect)(function () {
-    setState([value]);
-  }, [value]);
-  return state;
 }
