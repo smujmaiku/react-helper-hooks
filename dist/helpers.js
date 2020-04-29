@@ -1,5 +1,7 @@
 "use strict";
 
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -12,13 +14,20 @@ exports.useHelper = useHelper;
 exports.useAllHelpers = useAllHelpers;
 exports.usePromise = usePromise;
 exports.useFetch = useFetch;
+exports.makeHelperWall = makeHelperWall;
 exports.checkHelpersFailed = exports.checkHelpersReady = exports.never = void 0;
 
-var _react = require("react");
+var _react = _interopRequireWildcard(require("react"));
+
+var _propTypes = _interopRequireDefault(require("prop-types"));
 
 var _nodeFetch = _interopRequireDefault(require("node-fetch"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
 
@@ -76,6 +85,13 @@ function useObject(object) {
   }, [str]);
   return state;
 }
+/**
+ * Rebuilds an object's required nodes down a tree path
+ * @param {Object} state
+ * @param {Array} list
+ * @returns {Object} newState
+ */
+
 
 function rebuildObjectTree(state, list) {
   var newState = _objectSpread({}, state);
@@ -113,7 +129,7 @@ function patchReducer(state, patch) {
   return _objectSpread({}, state, {}, patch);
 }
 /**
- *
+ * Use simple patch hook
  * @param {Object?} init
  * @returns {Array} [state : Object, patch : Function]
  */
@@ -481,4 +497,62 @@ function useFetch(url) {
     }, _callee2);
   })), [url, fetchOpts, bodyType]);
   return usePromise(promise);
+}
+/**
+ * Make a helper wall to validate loading data
+ * @returns {Array} [HelperWall, useHelperWall, context]
+ * @example
+ * const [Wall, useData] = makeHelperWall();
+ * // ...
+ * return <Wall state={someHelper}>...</Wall>
+ * // ...
+ * const [state] = useData();
+ */
+
+
+function makeHelperWall() {
+  var context = (0, _react.createContext)();
+
+  function useHelperWall() {
+    return (0, _react.useContext)(context);
+  }
+
+  function HelperWall(props) {
+    var children = props.children,
+        state = props.state,
+        loadingComponent = props.loadingComponent,
+        failedComponent = props.failedComponent,
+        validate = props.validate;
+    var ready = state.ready,
+        failed = state.failed,
+        data = state.data;
+
+    if (!ready) {
+      return loadingComponent;
+    }
+
+    if (failed || !validate(data)) {
+      return failedComponent;
+    }
+
+    return /*#__PURE__*/_react["default"].createElement(context.Provider, {
+      value: [data]
+    }, children);
+  }
+
+  HelperWall.defaultProps = {
+    loadingComponent: false,
+    failedComponent: false,
+    validate: function validate() {
+      return true;
+    }
+  };
+  HelperWall.propTypes = {
+    children: _propTypes["default"].node.isRequired,
+    state: _propTypes["default"].object.isRequired,
+    loadingComponent: _propTypes["default"].node,
+    failedComponent: _propTypes["default"].node,
+    validate: _propTypes["default"].func
+  };
+  return [HelperWall, useHelperWall, context];
 }

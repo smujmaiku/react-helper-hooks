@@ -4,7 +4,8 @@
  * MIT Licensed
  */
 
-import { useReducer, useEffect, useState, useCallback } from 'react';
+import React, { useReducer, useEffect, useState, useCallback, useContext, createContext } from 'react';
+import propTypes from 'prop-types';
 import fetch from 'node-fetch';
 
 export const never = new Promise(() => {});
@@ -24,6 +25,12 @@ export function useObject(object) {
 	return state;
 }
 
+/**
+ * Rebuilds an object's required nodes down a tree path
+ * @param {Object} state
+ * @param {Array} list
+ * @returns {Object} newState
+ */
 export function rebuildObjectTree(state, list) {
 	const newState = { ...state };
 	let node = newState;
@@ -49,7 +56,7 @@ export function patchReducer(state, patch) {
 }
 
 /**
- *
+ * Use simple patch hook
  * @param {Object?} init
  * @returns {Array} [state : Object, patch : Function]
  */
@@ -267,4 +274,60 @@ export function useFetch(url, opts = {}) {
 	}, [url, fetchOpts, bodyType]);
 
 	return usePromise(promise);
+}
+
+/**
+ * Make a helper wall to validate loading data
+ * @returns {Array} [HelperWall, useHelperWall, context]
+ * @example
+ * const [Wall, useData] = makeHelperWall();
+ * // ...
+ * return <Wall state={someHelper}>...</Wall>
+ * // ...
+ * const [state] = useData();
+ */
+export function makeHelperWall() {
+	const context = createContext();
+
+	function useHelperWall() {
+		return useContext(context);
+	}
+
+	function HelperWall(props) {
+		const {
+			children, state, loadingComponent, failedComponent, validate,
+		} = props;
+
+		const { ready, failed, data } = state;
+
+		if (!ready) {
+			return loadingComponent;
+		}
+
+		if (failed || !validate(data)) {
+			return failedComponent;
+		}
+
+		return (
+			<context.Provider value={[data]}>
+				{children}
+			</context.Provider>
+		);
+	}
+
+	HelperWall.defaultProps = {
+		loadingComponent: false,
+		failedComponent: false,
+		validate: () => true,
+	};
+
+	HelperWall.propTypes = {
+		children: propTypes.node.isRequired,
+		state: propTypes.object.isRequired,
+		loadingComponent: propTypes.node,
+		failedComponent: propTypes.node,
+		validate: propTypes.func,
+	};
+
+	return [HelperWall, useHelperWall, context];
 }
