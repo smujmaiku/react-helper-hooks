@@ -9,7 +9,7 @@ exports.useObject = useObject;
 exports.rebuildObjectTree = rebuildObjectTree;
 exports.patchReducer = patchReducer;
 exports.usePatch = usePatch;
-exports.useMap = useMap;
+exports.useValues = useValues;
 exports.helperReducer = helperReducer;
 exports.useHelper = useHelper;
 exports.useAllHelpers = useAllHelpers;
@@ -141,13 +141,13 @@ function usePatch() {
   return (0, _react.useReducer)(patchReducer, init);
 }
 /**
- * Use map object to array and back hook
+ * Use Object values and remap hook
  * @param {Object|Array} data
  * @returns {Array} [state : Array, remap : Function]
  */
 
 
-function useMap(data) {
+function useValues(data) {
   var _useState3 = (0, _react.useState)([[], function () {
     return {};
   }]),
@@ -156,11 +156,18 @@ function useMap(data) {
       setState = _useState4[1];
 
   (0, _react.useEffect)(function () {
+    var prevList, prevMap;
     var keys = Object.keys(data);
     setState([keys.map(function (key) {
       return data[key];
     }), function (list) {
-      if (data instanceof Array) return list;
+      if (prevList === list) return prevMap;
+
+      if (data instanceof Array) {
+        prevMap = list;
+        return list;
+      }
+
       var map = {};
 
       for (var i = 0; i < list.length && i < keys.length; i++) {
@@ -168,6 +175,7 @@ function useMap(data) {
         map[key] = list[i];
       }
 
+      prevMap = map;
       return map;
     }]);
   }, [data]);

@@ -65,26 +65,34 @@ export function usePatch(init = {}) {
 }
 
 /**
- * Use map object to array and back hook
+ * Use Object values and remap hook
  * @param {Object|Array} data
  * @returns {Array} [state : Array, remap : Function]
  */
-export function useMap(data) {
+export function useValues(data) {
 	const [state, setState] = useState([[], () => ({})]);
 
 	useEffect(() => {
+		let prevList, prevMap;
 		const keys = Object.keys(data);
 
 		setState([
 			keys.map(key => data[key]),
 			(list) => {
-				if (data instanceof Array) return list;
+				if (prevList === list) return prevMap;
+
+				if (data instanceof Array) {
+					prevMap = list;
+					return list;
+				}
 
 				const map = {};
 				for (let i = 0; i < list.length && i < keys.length; i++) {
 					const key = keys[i];
 					map[key] = list[i];
 				}
+
+				prevMap = map;
 				return map;
 			},
 		]);
