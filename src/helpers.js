@@ -204,11 +204,16 @@ export function useAllHelpers(helpers, postProcessor = undefined) {
  * return usePromise(promise);
  */
 export function usePromise(promise) {
-	const [state, { init, resolve, reject }] = useHelper();
+	const [state, { init, reset, resolve, reject }] = useHelper();
 	const [reload, setReload] = useState(0);
+	const [softReload, setSoftReload] = useState(false);
 
 	useEffect(() => {
-		init();
+		if (softReload) {
+			reset();
+		} else {
+			init();
+		}
 		let timeout = false;
 
 		(async () => {
@@ -223,10 +228,11 @@ export function usePromise(promise) {
 		});
 
 		return () => { timeout = true; };
-	}, [promise, init, resolve, reject, reload]);
+	}, [promise, init, resolve, reject, reload, softReload]);
 
 	const [actions] = useState({
-		reload: () => {
+		reload: (soft = false) => {
+			setSoftReload(soft);
 			setReload(Date.now());
 		},
 	});

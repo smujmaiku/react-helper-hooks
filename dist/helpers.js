@@ -350,6 +350,7 @@ function usePromise(promise) {
       state = _useHelper4[0],
       _useHelper4$ = _useHelper4[1],
       init = _useHelper4$.init,
+      reset = _useHelper4$.reset,
       resolve = _useHelper4$.resolve,
       reject = _useHelper4$.reject;
 
@@ -358,8 +359,18 @@ function usePromise(promise) {
       reload = _useState6[0],
       setReload = _useState6[1];
 
+  var _useState7 = (0, _react.useState)(false),
+      _useState8 = _slicedToArray(_useState7, 2),
+      softReload = _useState8[0],
+      setSoftReload = _useState8[1];
+
   (0, _react.useEffect)(function () {
-    init();
+    if (softReload) {
+      reset();
+    } else {
+      init();
+    }
+
     var timeout = false;
 
     _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
@@ -406,15 +417,17 @@ function usePromise(promise) {
     return function () {
       timeout = true;
     };
-  }, [promise, init, resolve, reject, reload]);
+  }, [promise, init, resolve, reject, reload, softReload]);
 
-  var _useState7 = (0, _react.useState)({
+  var _useState9 = (0, _react.useState)({
     reload: function reload() {
+      var soft = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+      setSoftReload(soft);
       setReload(Date.now());
     }
   }),
-      _useState8 = _slicedToArray(_useState7, 1),
-      actions = _useState8[0];
+      _useState10 = _slicedToArray(_useState9, 1),
+      actions = _useState10[0];
 
   return [state, actions];
 }
