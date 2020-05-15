@@ -64,6 +64,35 @@ export function usePatch(init = {}) {
 	return useReducer(patchReducer, init);
 }
 
+/**
+ * Use map object to array and back hook
+ * @param {Object|Array} data
+ * @returns {Array} [state : Array, remap : Function]
+ */
+export function useMap(data) {
+	const [state, setState] = useState([[], () => ({})]);
+
+	useEffect(() => {
+		const keys = Object.keys(data);
+
+		setState([
+			keys.map(key => data[key]),
+			(list) => {
+				if (data instanceof Array) return list;
+
+				const map = {};
+				for (let i = 0; i < list.length && i < keys.length; i++) {
+					const key = keys[i];
+					map[key] = list[i];
+				}
+				return map;
+			},
+		]);
+	}, [data]);
+
+	return state;
+}
+
 export function helperReducer(state, [type, payload]) {
 	switch (type) {
 	case 'init':

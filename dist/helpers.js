@@ -9,6 +9,7 @@ exports.useObject = useObject;
 exports.rebuildObjectTree = rebuildObjectTree;
 exports.patchReducer = patchReducer;
 exports.usePatch = usePatch;
+exports.useMap = useMap;
 exports.helperReducer = helperReducer;
 exports.useHelper = useHelper;
 exports.useAllHelpers = useAllHelpers;
@@ -139,6 +140,39 @@ function usePatch() {
   var init = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
   return (0, _react.useReducer)(patchReducer, init);
 }
+/**
+ * Use map object to array and back hook
+ * @param {Object|Array} data
+ * @returns {Array} [state : Array, remap : Function]
+ */
+
+
+function useMap(data) {
+  var _useState3 = (0, _react.useState)([[], function () {
+    return {};
+  }]),
+      _useState4 = _slicedToArray(_useState3, 2),
+      state = _useState4[0],
+      setState = _useState4[1];
+
+  (0, _react.useEffect)(function () {
+    var keys = Object.keys(data);
+    setState([keys.map(function (key) {
+      return data[key];
+    }), function (list) {
+      if (data instanceof Array) return list;
+      var map = {};
+
+      for (var i = 0; i < list.length && i < keys.length; i++) {
+        var key = keys[i];
+        map[key] = list[i];
+      }
+
+      return map;
+    }]);
+  }, [data]);
+  return state;
+}
 
 function helperReducer(state, _ref) {
   var _ref2 = _slicedToArray(_ref, 2),
@@ -215,7 +249,7 @@ function useHelper(initialState) {
       state = _useReducer2[0],
       dispatch = _useReducer2[1];
 
-  var _useState3 = (0, _react.useState)({
+  var _useState5 = (0, _react.useState)({
     init: function init() {
       dispatch(['init']);
     },
@@ -238,8 +272,8 @@ function useHelper(initialState) {
       }]);
     }
   }),
-      _useState4 = _slicedToArray(_useState3, 1),
-      actions = _useState4[0];
+      _useState6 = _slicedToArray(_useState5, 1),
+      actions = _useState6[0];
 
   return [state, actions];
 }
@@ -354,15 +388,15 @@ function usePromise(promise) {
       resolve = _useHelper4$.resolve,
       reject = _useHelper4$.reject;
 
-  var _useState5 = (0, _react.useState)(0),
-      _useState6 = _slicedToArray(_useState5, 2),
-      reload = _useState6[0],
-      setReload = _useState6[1];
-
-  var _useState7 = (0, _react.useState)(false),
+  var _useState7 = (0, _react.useState)(0),
       _useState8 = _slicedToArray(_useState7, 2),
-      softReload = _useState8[0],
-      setSoftReload = _useState8[1];
+      reload = _useState8[0],
+      setReload = _useState8[1];
+
+  var _useState9 = (0, _react.useState)(false),
+      _useState10 = _slicedToArray(_useState9, 2),
+      softReload = _useState10[0],
+      setSoftReload = _useState10[1];
 
   (0, _react.useEffect)(function () {
     if (softReload) {
@@ -419,15 +453,15 @@ function usePromise(promise) {
     };
   }, [promise, init, resolve, reject, reload, softReload]);
 
-  var _useState9 = (0, _react.useState)({
+  var _useState11 = (0, _react.useState)({
     reload: function reload() {
       var soft = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
       setSoftReload(soft);
       setReload(Date.now());
     }
   }),
-      _useState10 = _slicedToArray(_useState9, 1),
-      actions = _useState10[0];
+      _useState12 = _slicedToArray(_useState11, 1),
+      actions = _useState12[0];
 
   return [state, actions];
 }
